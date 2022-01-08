@@ -1416,27 +1416,53 @@ export class TldrawApp extends StateManager<TDSnapshot> {
   }
 
   /**
-   * Add an integration to the page
+   * Query next childIndex for a new shape.
    */
-  addIntegration = async () => {
+  getNextChildIndex = (): number => {
+    return this.shapes.length === 0
+      ? 1
+      : this.shapes
+          .filter((shape) => shape.parentId === this.currentPageId)
+          .sort((a, b) => b.childIndex - a.childIndex)[0].childIndex + 1
+  }
+
+  /**
+   * Add an integration shape to the page
+   */
+  addIntegrationShape = (params) => {
     if (!this.isLocal) return
 
     const shapeId = Utils.uniqueId()
     this.createShapes({
       id: shapeId,
-      type: TDShapeType.Integration,
       parentId: this.appState.currentPageId,
-      point: Vec.add(this.getPagePoint(this.centerPoint, this.currentPageId), [-200, -25]),
-      size: [400, 50],
+      type: TDShapeType.Integration,
+      childIndex: this.getNextChildIndex(),
+      point: Vec.sub(
+        this.getPagePoint(this.centerPoint, this.currentPageId),
+        Vec.div(params.size, 2)),
+      ...params,
       style: {
         ...this.appState.currentStyle,
         font: FontStyle.Mono,
         textAlign: AlignStyle.Start,
-        size: SizeStyle.Tiny
-      },
-      text: '⚠ https://example.com'
+        size: SizeStyle.Tiny,
+        ...params.style
+      }
     })
     this.select(shapeId)
+    return shapeId
+  }
+
+  /**
+   * Add an integration to the page
+   */
+  addIntegration = () => {
+    return this.addIntegrationShape({
+      integrationParentId: null,
+      size: [400, 42],
+      text: '🔴 https://example.com'
+    })
   }
 
   /**

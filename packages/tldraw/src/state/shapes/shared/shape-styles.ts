@@ -78,7 +78,7 @@ const strokeWidths = {
 }
 
 const fontSizes = {
-  [SizeStyle.Tiny]: 18,
+  [SizeStyle.Tiny]: 14,
   [SizeStyle.Small]: 28,
   [SizeStyle.Medium]: 48,
   [SizeStyle.Large]: 96,
@@ -100,7 +100,7 @@ const fontSizeModifiers = {
 }
 
 const stickyFontSizes = {
-  [SizeStyle.Tiny]: 16,
+  [SizeStyle.Tiny]: 12,
   [SizeStyle.Small]: 24,
   [SizeStyle.Medium]: 36,
   [SizeStyle.Large]: 48,
