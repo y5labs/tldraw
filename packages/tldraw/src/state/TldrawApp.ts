@@ -1429,18 +1429,29 @@ export class TldrawApp extends StateManager<TDSnapshot> {
   /**
    * Add an integration shape to the page
    */
-  addIntegrationShape = (params) => {
+  addIntegrationShape = (id, params) => {
     if (!this.isLocal) return
 
     const shapeId = Utils.uniqueId()
+
+    const defaultPoint = Vec.sub(
+      this.getPagePoint(this.centerPoint, this.currentPageId),
+      Vec.div(params.size, 2))
+
+    // Stack new integrations
+    const point = Vec.max(
+      defaultPoint,
+      ...this.shapes
+        .filter(s => s.type == TDShapeType.Integration)
+        .map(s => Vec.add(s.point, [0, s.size[1] + 5])))
+
     this.createShapes({
       id: shapeId,
+      instanceId: id,
       parentId: this.appState.currentPageId,
       type: TDShapeType.Integration,
       childIndex: this.getNextChildIndex(),
-      point: Vec.sub(
-        this.getPagePoint(this.centerPoint, this.currentPageId),
-        Vec.div(params.size, 2)),
+      point,
       ...params,
       style: {
         ...this.appState.currentStyle,
@@ -1450,7 +1461,7 @@ export class TldrawApp extends StateManager<TDSnapshot> {
         ...params.style
       }
     })
-    this.select(shapeId)
+    this.selectNone()
     return shapeId
   }
 
@@ -1458,8 +1469,8 @@ export class TldrawApp extends StateManager<TDSnapshot> {
    * Add an integration to the page
    */
   addIntegration = () => {
-    return this.addIntegrationShape({
-      integrationParentId: null,
+    return this.addIntegrationShape(null, {
+      integrationParentShapeId: null,
       size: [400, 42],
       text: '🔴 https://example.com'
     })
