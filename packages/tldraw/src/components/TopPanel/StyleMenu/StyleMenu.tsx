@@ -12,6 +12,7 @@ import {
   SizeLargeIcon,
   SizeMediumIcon,
   SizeSmallIcon,
+  SizeTinyIcon,
 } from '~components/Primitives/icons'
 import { ToolButton } from '~components/Primitives/ToolButton'
 import {
@@ -49,6 +50,7 @@ const DASH_ICONS = {
 }
 
 const SIZE_ICONS = {
+  [SizeStyle.Tiny]: <SizeTinyIcon />,
   [SizeStyle.Small]: <SizeSmallIcon />,
   [SizeStyle.Medium]: <SizeMediumIcon />,
   [SizeStyle.Large]: <SizeLargeIcon />,

@@ -78,6 +78,10 @@ export const Menu = React.memo(function Menu({ showSponsorLink, readOnly }: Menu
     app.openAsset()
   }, [app])
 
+  const handleAddIntegration = React.useCallback(() => {
+    app.addIntegration()
+  }, [app])
+
   const showFileMenu =
     app.callbacks.onNewProject ||
     app.callbacks.onOpenProject ||
@@ -178,40 +182,10 @@ export const Menu = React.memo(function Menu({ showSponsorLink, readOnly }: Menu
         <DMDivider dir="ltr" />
         <PreferencesMenu />
         <DMDivider dir="ltr" />
-        <a href="https://github.com/Tldraw/Tldraw" target="_blank" rel="nofollow">
-          <DMItem>
-            GitHub
-            <SmallIcon>
-              <GitHubLogoIcon />
-            </SmallIcon>
-          </DMItem>
-        </a>
-        <a href="https://twitter.com/Tldraw" target="_blank" rel="nofollow">
-          <DMItem>
-            Twitter
-            <SmallIcon>
-              <TwitterLogoIcon />
-            </SmallIcon>
-          </DMItem>
-        </a>
-        <a href="https://discord.gg/SBBEVCA4PG" target="_blank" rel="nofollow">
-          <DMItem>
-            Discord
-            <SmallIcon>
-              <DiscordIcon />
-            </SmallIcon>
-          </DMItem>
-        </a>
-        {showSponsorLink && (
-          <a href="https://github.com/sponsors/steveruizok" target="_blank" rel="nofollow">
-            <DMItem isSponsor>
-              Become a Sponsor{' '}
-              <SmallIcon>
-                <HeartIcon />
-              </SmallIcon>
-            </DMItem>
-          </a>
-        )}
+        <DMItem
+          onSelect={preventEvent}
+          onClick={handleAddIntegration}
+        >Add Integration...</DMItem>
         {showSignInOutMenu && (
           <>
             <DMDivider dir="ltr" />{' '}

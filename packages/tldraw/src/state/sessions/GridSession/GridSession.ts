@@ -248,7 +248,7 @@ export class GridSession extends BaseSession {
     }
 
     if (!copy) {
-      if (clone.type === TDShapeType.Sticky) {
+      if ([TDShapeType.Sticky, TDShapeType.Integration].includes(clone.type)) {
         clone.text = ''
       }
     }

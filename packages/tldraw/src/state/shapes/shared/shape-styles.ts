@@ -71,12 +71,14 @@ export const fills: Record<Theme, Record<ColorStyle, string>> = {
 }
 
 const strokeWidths = {
+  [SizeStyle.Tiny]: 1.5,
   [SizeStyle.Small]: 2,
   [SizeStyle.Medium]: 3.5,
   [SizeStyle.Large]: 5,
 }
 
 const fontSizes = {
+  [SizeStyle.Tiny]: 18,
   [SizeStyle.Small]: 28,
   [SizeStyle.Medium]: 48,
   [SizeStyle.Large]: 96,
@@ -98,6 +100,7 @@ const fontSizeModifiers = {
 }
 
 const stickyFontSizes = {
+  [SizeStyle.Tiny]: 16,
   [SizeStyle.Small]: 24,
   [SizeStyle.Medium]: 36,
   [SizeStyle.Large]: 48,

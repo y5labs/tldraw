@@ -14,6 +14,7 @@ import Api from './api'
 import FileSystem from './file-system'
 import UIOptions from './ui-options'
 import { Multiplayer } from './multiplayer'
+import Integration from './integration'
 import './styles.css'
 
 export default function App(): JSX.Element {
@@ -61,6 +62,9 @@ export default function App(): JSX.Element {
         </Route>
         <Route path="/multiplayer">
           <Multiplayer />
+        </Route>
+        <Route path="/integration">
+          <Integration />
         </Route>
         <Route path="/">
           <img className="hero" src="./card-repo.png" />
@@ -110,6 +114,9 @@ export default function App(): JSX.Element {
             </li>
             <li>
               <Link to="/multiplayer">Multiplayer</Link>
+            </li>
+            <li>
+              <Link to="/integration">Integration</Link>
             </li>
           </ul>
         </Route>

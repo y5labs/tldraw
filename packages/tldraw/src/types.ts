@@ -273,6 +273,7 @@ export enum FlipType {
 /* -------------------------------------------------- */
 
 export enum TDShapeType {
+  Integration = 'integration',
   Sticky = 'sticky',
   Ellipse = 'ellipse',
   Rectangle = 'rectangle',
@@ -420,6 +421,7 @@ export enum ColorStyle {
 }
 
 export enum SizeStyle {
+  Tiny = 'tiny',
   Small = 'small',
   Medium = 'medium',
   Large = 'large',
@@ -433,6 +435,7 @@ export enum DashStyle {
 }
 
 export enum FontSize {
+  Tiny = 'tiny',
   Small = 'small',
   Medium = 'medium',
   Large = 'large',

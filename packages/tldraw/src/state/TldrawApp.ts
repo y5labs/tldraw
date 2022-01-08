@@ -37,6 +37,9 @@ import {
   TDToolType,
   TDAssetType,
   TDAsset,
+  AlignStyle,
+  FontStyle,
+  SizeStyle,
 } from '~types'
 import {
   migrate,
@@ -164,6 +167,7 @@ export class TldrawApp extends StateManager<TDSnapshot> {
     [TDShapeType.Line]: new LineTool(this),
     [TDShapeType.Arrow]: new ArrowTool(this),
     [TDShapeType.Sticky]: new StickyTool(this),
+    [TDShapeType.Integration]: new StickyTool(this),
   }
 
   currentTool: BaseTool = this.tools.select
@@ -1409,6 +1413,30 @@ export class TldrawApp extends StateManager<TDSnapshot> {
       } finally {
         this.persist()
       }
+  }
+
+  /**
+   * Add an integration to the page
+   */
+  addIntegration = async () => {
+    if (!this.isLocal) return
+
+    const shapeId = Utils.uniqueId()
+    this.createShapes({
+      id: shapeId,
+      type: TDShapeType.Integration,
+      parentId: this.appState.currentPageId,
+      point: Vec.add(this.getPagePoint(this.centerPoint, this.currentPageId), [-200, -25]),
+      size: [400, 50],
+      style: {
+        ...this.appState.currentStyle,
+        font: FontStyle.Mono,
+        textAlign: AlignStyle.Start,
+        size: SizeStyle.Tiny
+      },
+      text: '⚠ https://example.com'
+    })
+    this.select(shapeId)
   }
 
   /**

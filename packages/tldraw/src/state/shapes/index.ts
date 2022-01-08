@@ -31,6 +31,7 @@ export const shapeUtils = {
   [TDShapeType.Text]: Text,
   [TDShapeType.Group]: Group,
   [TDShapeType.Sticky]: Sticky,
+  [TDShapeType.Integration]: Sticky,
   [TDShapeType.Image]: Image,
   [TDShapeType.Video]: Video,
 }
