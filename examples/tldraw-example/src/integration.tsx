@@ -38,7 +38,7 @@ const diff = (prev, next) => {
   }
   for (const [key, value] of prev.entries()) {
     if (!next.has(key)) res.delete.set(key, value)
-    else res.same.set(key, value)
+    else res.same.set(key, [value, next.get(key)])
   }
   for (const [key, value] of next.entries()) {
     if (!prev.has(key)) res.create.set(key, value)
@@ -141,13 +141,43 @@ const IntegrationProvider = ({ children }) => {
       // remove deletions that are really renames
       toDelete.delete(shape.id)
     }
+    for (const [uri, [_, shape]] of changes.same)
+      uris.get(uri).shape = shape
     app.current.delete(Array.from(toDelete.values()))
   }
 
   const retreiveInstanceState = async () => {
     for (const i of uris.values()) {
-      console.log('querying', i.uri)
+      i.instances = null
+      try {
+        const res = await fetch(i.uri)
+        if (!res.ok) {
+          const message = await res.text()
+          console.error(`🔴 ${i.uri}`, message)
+          i.status = 'error'
+          continue
+        }
+        Object.assign(i, await res.json())
+        i.status = 'ok'
+      }
+      catch (e) {
+        console.error(`🔴 ${i.uri}`, e)
+        i.status = 'error'
+      }
+    }
+  }
 
+  const setIntegrationStatuses = async () => {
+    for (const i of uris.values()) {
+      const text =
+        i.status == 'ok'
+        ? i.uri
+        : `🔴 ${i.uri}`
+      if (i.shape.text != text)
+        app.current?.updateShapes({
+          id: i.shape.id,
+          text
+        })
     }
   }
 
@@ -165,21 +195,26 @@ const IntegrationProvider = ({ children }) => {
       integrationShape.children.set(s.instanceId, s)
     }
     for (const i of integrationShapes.values()) {
-      const next = new Map([
-        ['id1', {
-          instanceId: 'id1',
-          text: `Test ${i.uri}`
-        }]
-      ])
+      if (!i.instances) continue
+      const next = new Map(i.instances.map(i => [i.instanceId, i]))
       const changes = diff(i.children, next)
       if (changes.create.size > 0 || changes.delete.size > 0)
         console.log(`${i.uri} Δ ${Object.entries(changes)
           .map(([k, v]) => `${k[0]}${v.size}`)
           .join(' ')}`)
       app.current.delete(Array.from(changes.delete.values()).map(s => s.id))
-      for (const s of Array.from(changes.create.values())) {
+      for (const s of changes.create.values())
         await addIntegrationChild(i.shape.id, s.instanceId, s)
-      }
+      console.log(Array.from(changes.same.values()))
+      const shapeUpdates = Array.from(changes.same.values())
+        .filter(([shape, shape_new]) => shape.text != shape_new.text)
+        .map(([shape, shape_new]) => ({
+          id: shape.id,
+          text: shape_new.text
+        }))
+      console.log(shapeUpdates)
+      if (shapeUpdates.length > 0)
+        app.current.updateShapes(...shapeUpdates)
     }
   }
 
@@ -190,6 +225,7 @@ const IntegrationProvider = ({ children }) => {
       await sanitizePageIntegrations()
       await detectAndApplyIntegrationChanges()
       await retreiveInstanceState()
+      await setIntegrationStatuses()
       await detectAndApplyInstanceChanges()
     }), 2000)
     return () => {
