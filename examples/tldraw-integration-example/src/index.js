@@ -1,6 +1,7 @@
 import inject from 'seacreature/lib/inject'
 import { jwt } from '../lib/y5-crypto'
 import fetch from 'node-fetch'
+import { NetlifyAPI } from 'netlify'
 
 inject('pod', async ({ app }) => {
   let token_raw = null
@@ -38,7 +39,7 @@ inject('pod', async ({ app }) => {
     return appDefinitions
   }
 
-  app.get('/tldraw', inject.one('req.guard')(async (req, res) => {
+  app.get('/caprover', inject.one('req.guard')(async (req, res) => {
     await assert_token()
     const app_definitions = await get_app_definitions()
     // console.log(JSON.stringify(app_definitions?.[0], null, 2))
@@ -53,6 +54,26 @@ inject('pod', async ({ app }) => {
         return {
           instanceId: a.appName,
           text: `${prefix}${a.appName}`
+        }
+      })
+    })
+  }))
+
+  const client = new NetlifyAPI(process.env.NETLIFY_API_KEY)
+
+  app.get('/netlify', inject.one('req.guard')(async (req, res) => {
+    const sites = await client.listSites({ filter: 'all', per_page: 999 })
+    res.send({
+      instances: sites.map(s => {
+        const prefix =
+          s.error_message != null
+          ? '🔴'
+          : s.disabled != null
+          ? '⚪️ '
+          : ''
+        return {
+          instanceId: s.id,
+          text: `${prefix}${s.url}`
         }
       })
     })

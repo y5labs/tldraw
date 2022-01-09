@@ -205,14 +205,12 @@ const IntegrationProvider = ({ children }) => {
       app.current.delete(Array.from(changes.delete.values()).map(s => s.id))
       for (const s of changes.create.values())
         await addIntegrationChild(i.shape.id, s.instanceId, s)
-      console.log(Array.from(changes.same.values()))
       const shapeUpdates = Array.from(changes.same.values())
         .filter(([shape, shape_new]) => shape.text != shape_new.text)
         .map(([shape, shape_new]) => ({
           id: shape.id,
           text: shape_new.text
         }))
-      console.log(shapeUpdates)
       if (shapeUpdates.length > 0)
         app.current.updateShapes(...shapeUpdates)
     }
