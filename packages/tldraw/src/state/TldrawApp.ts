@@ -1472,7 +1472,7 @@ export class TldrawApp extends StateManager<TDSnapshot> {
     return this.addIntegrationShape(null, {
       integrationParentShapeId: null,
       size: [400, 42],
-      text: '🔴 https://example.com'
+      text: '🔴 http://localhost:8080/tldraw'
     })
   }
 

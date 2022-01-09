@@ -53,7 +53,7 @@ const IntegrationContext = React.createContext()
 const IntegrationProvider = ({ children }) => {
   const app = React.useRef<TldrawApp>()
 
-  const hosts = new Map()
+  const uris = new Map()
 
   const addIntegrationChild = async (parentId, id, params) => {
     app.current.addIntegrationShape(id, {
@@ -63,40 +63,41 @@ const IntegrationProvider = ({ children }) => {
     })
   }
 
-  const parseHost = s => {
+  const parseUri = s => {
     const chunks = s.split(' ')
-    const host = chunks.length == 1
+    const uri = chunks.length == 1
       ? chunks[0] : chunks[0].length < 5
       ? chunks[1] : chunks[0]
-    return host
+    return uri
   }
 
   const getPageIntegrations = () =>
     new Map(app.current.shapes
       .filter(s => s.type === TDShapeType.Integration
         && s.integrationParentShapeId == null)
-      .map(s => [parseHost(s.text), s]))
+      .map(s => [parseUri(s.text), s]))
 
   const sanitizePageIntegrations = () => {
     // remove integrations that:
-    // - share a host
+    // - share a uri
     // remove integration instances that:
     // - do not point to an integration
     // - share an integration id within the same integration
+    // This is usually due to creating an additional integration with the same uri or cloning an integration
     const toDelete = []
-    const hosts = new Set()
+    const uris = new Set()
     const byShapeId = new Map()
     const shapes = app.current.shapes.slice()
     shapes.sort((a, b) => a.id - b.id)
     for (const s of shapes) {
       if (s.type !== TDShapeType.Integration
         || s.integrationParentShapeId != null) continue
-      const host = parseHost(s.text)
-      if (hosts.has(host)) {
+      const uri = parseUri(s.text)
+      if (uris.has(uri)) {
         toDelete.push(s.id)
         continue
       }
-      hosts.add(host)
+      uris.add(uri)
       byShapeId.set(s.id, new Map())
     }
     for (const s of shapes) {
@@ -116,27 +117,69 @@ const IntegrationProvider = ({ children }) => {
     app.current.delete(toDelete)
   }
 
-  const detectAndApplyChanges = async () => {
+  const detectAndApplyIntegrationChanges = async () => {
     if (!app.current) return
 
     const next = getPageIntegrations()
-    const changes = diff(hosts, next)
+    const changes = diff(uris, next)
+    const toDelete = new Set()
     if (changes.create.size > 0 || changes.delete.size > 0)
       console.log(`Δ ${Object.entries(changes)
         .map(([k, v]) => `${k[0]}${v.size}`)
         .join(' ')}`)
-    for (const [host, shape] of changes.delete) {
-      const childIds = app.current.shapes
+    for (const [uri, shape] of changes.delete) {
+      app.current.shapes
         .filter(s => s.type == TDShapeType.Integration
           || s.integrationParentShapeId == shape.id)
-        .map(s => s.id)
-      console.log(`Deleting ${host} and ${childIds.length} children`)
-      app.current.delete(childIds)
-      hosts.delete(host)
+        .forEach(s => toDelete.add(s.id))
+      console.log(`${uri} stopping service`)
+      uris.delete(uri)
     }
-    for (const [host, shape] of changes.create) {
-      hosts.set(host, { host, shape })
-      // addIntegrationChild(shape.id, 1, `Test ${host}`)
+    for (const [uri, shape] of changes.create) {
+      uris.set(uri, { uri, shape })
+      console.log(`${uri} starting service`)
+      // remove deletions that are really renames
+      toDelete.delete(shape.id)
+    }
+    app.current.delete(Array.from(toDelete.values()))
+  }
+
+  const retreiveInstanceState = async () => {
+    for (const i of uris.values()) {
+      console.log('querying', i.uri)
+
+    }
+  }
+
+  const detectAndApplyInstanceChanges = async () => {
+    const integrationShapes = new Map()
+    for (const i of uris.values()) {
+      integrationShapes.set(i.shape.id, i)
+      i.children = new Map()
+    }
+    for (const s of app.current.shapes) {
+      if (s.type != TDShapeType.Integration
+        || !integrationShapes.has(s.integrationParentShapeId))
+        continue
+      const integrationShape = integrationShapes.get(s.integrationParentShapeId)
+      integrationShape.children.set(s.instanceId, s)
+    }
+    for (const i of integrationShapes.values()) {
+      const next = new Map([
+        ['id1', {
+          instanceId: 'id1',
+          text: `Test ${i.uri}`
+        }]
+      ])
+      const changes = diff(i.children, next)
+      if (changes.create.size > 0 || changes.delete.size > 0)
+        console.log(`${i.uri} Δ ${Object.entries(changes)
+          .map(([k, v]) => `${k[0]}${v.size}`)
+          .join(' ')}`)
+      app.current.delete(Array.from(changes.delete.values()).map(s => s.id))
+      for (const s of Array.from(changes.create.values())) {
+        await addIntegrationChild(i.shape.id, s.instanceId, s)
+      }
     }
   }
 
@@ -145,36 +188,9 @@ const IntegrationProvider = ({ children }) => {
       if (!app.current
         || app.current.pageState.selectedIds.length != 0) return
       await sanitizePageIntegrations()
-      await detectAndApplyChanges()
-      const integrationShapes = new Map()
-      for (const i of hosts.values()) {
-        integrationShapes.set(i.shape.id, i)
-        i.children = new Map()
-      }
-      for (const s of app.current.shapes) {
-        if (s.type != TDShapeType.Integration
-          || !integrationShapes.has(s.integrationParentShapeId))
-          continue
-        const integrationShape = integrationShapes.get(s.integrationParentShapeId)
-        integrationShape.children.set(s.instanceId, s)
-      }
-      for (const i of integrationShapes.values()) {
-        const next = new Map([
-          ['id1', {
-            instanceId: 'id1',
-            text: `Test ${i.host}`
-          }]
-        ])
-        const changes = diff(i.children, next)
-        if (changes.create.size > 0 || changes.delete.size > 0)
-          console.log(`${i.host} Δ ${Object.entries(changes)
-            .map(([k, v]) => `${k[0]}${v.size}`)
-            .join(' ')}`)
-        app.current.delete(Array.from(changes.delete.values()).map(s => s.id))
-        for (const s of Array.from(changes.create.values())) {
-          await addIntegrationChild(i.shape.id, s.instanceId, s)
-        }
-      }
+      await detectAndApplyIntegrationChanges()
+      await retreiveInstanceState()
+      await detectAndApplyInstanceChanges()
     }), 2000)
     return () => {
       clearInterval(handle)
