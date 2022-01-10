@@ -1,5 +1,12 @@
 import * as React from 'react'
-import { TDShapeType, Tldraw, TldrawApp, FontStyle, SizeStyle } from '@tldraw/tldraw'
+import {
+  TDShapeType,
+  Tldraw,
+  TldrawApp,
+  FontStyle,
+  SizeStyle,
+  useFileSystem,
+} from '@tldraw/tldraw'
 
 const debounce = (fn: Function) => {
   let current = null
@@ -239,9 +246,11 @@ const IntegrationProvider = ({ children }) => {
 }
 
 function App(): JSX.Element {
+  const fileSystemEvents = useFileSystem()
   const api = React.useContext(IntegrationContext)
 
   return <Tldraw
+    {...fileSystemEvents}
     onMount={React.useCallback(api.setApp, [])}
     onChange={React.useCallback(api.handleChange, [])}
     showSponsorLink={false}
