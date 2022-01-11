@@ -5,8 +5,10 @@ import {
   TldrawApp,
   FontStyle,
   SizeStyle,
-  useFileSystem,
+  TDFile
 } from '@tldraw/tldraw'
+
+import { migrate } from '@tldraw/tldraw/src/state/data/migrate'
 
 const debounce = (fn: Function) => {
   let current = null
@@ -37,6 +39,8 @@ const debounce = (fn: Function) => {
   return attempt
 }
 
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms))
+
 const diff = (prev, next) => {
   const res = {
     create: new Map(),
@@ -53,7 +57,6 @@ const diff = (prev, next) => {
   return res
 }
 
-const sleep = (ms: number) => new Promise(res => setTimeout(res, ms))
 
 const IntegrationContext = React.createContext()
 
@@ -246,11 +249,95 @@ const IntegrationProvider = ({ children }) => {
 }
 
 function App(): JSX.Element {
-  const fileSystemEvents = useFileSystem()
   const api = React.useContext(IntegrationContext)
+  const [file, setFile] = React.useState<TDFile>()
+
+  React.useEffect(() => {
+    (async () => {
+      await sleep(1000)
+      setFile({
+        "name": "New Document",
+        "fileHandle": null,
+        "document": {
+          "id": "doc",
+          "name": "New Document",
+          "version": 15.3,
+          "pages": {
+            "page": {
+              "id": "page",
+              "name": "Page 1",
+              "childIndex": 1,
+              "shapes": {
+                "e9a34296-076f-4a1b-0e92-78488891c3d5": {
+                  "id": "e9a34296-076f-4a1b-0e92-78488891c3d5",
+                  "type": "rectangle",
+                  "name": "Rectangle",
+                  "parentId": "page",
+                  "childIndex": 1,
+                  "point": [
+                    598,
+                    196
+                  ],
+                  "size": [
+                    147,
+                    133
+                  ],
+                  "rotation": 0,
+                  "style": {
+                    "color": "black",
+                    "size": "small",
+                    "isFilled": false,
+                    "dash": "draw",
+                    "scale": 1
+                  },
+                  "label": "",
+                  "labelPoint": [
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              "bindings": {}
+            }
+          },
+          "pageStates": {
+            "page": {
+              "id": "page",
+              "selectedIds": [
+                "e9a34296-076f-4a1b-0e92-78488891c3d5"
+              ],
+              "camera": {
+                "point": [
+                  0,
+                  0
+                ],
+                "zoom": 1
+              },
+              "editingId": null
+            }
+          },
+          "assets": {}
+        },
+        "assets": {}
+      })
+    })()
+  }, [])
+
+  const onSaveProject = React.useCallback((app: TldrawApp) => {
+    const document = migrate(app.document, TldrawApp.version)
+    const file: TDFile = {
+      name: document.name || 'New Document',
+      fileHandle: null,
+      document,
+      assets: {},
+    }
+
+    console.log(file)
+  }, [])
 
   return <Tldraw
-    {...fileSystemEvents}
+    document={file?.document}
+    onSaveProject={onSaveProject}
     onMount={React.useCallback(api.setApp, [])}
     onChange={React.useCallback(api.handleChange, [])}
     showSponsorLink={false}
