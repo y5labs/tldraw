@@ -137,10 +137,11 @@ const IntegrationProvider = ({ children }) => {
       console.log(`Δ ${Object.entries(changes)
         .map(([k, v]) => `${k[0]}${v.size}`)
         .join(' ')}`)
-    for (const [uri, shape] of changes.delete) {
+    for (const [uri, { shape }] of changes.delete) {
+      // console.log(`Checking children of`, shape)
       app.current.shapes
         .filter(s => s.type == TDShapeType.Integration
-          || s.integrationParentShapeId == shape.id)
+          && s.integrationParentShapeId == shape.id)
         .forEach(s => toDelete.add(s.id))
       console.log(`${uri} stopping service`)
       uris.delete(uri)
@@ -153,7 +154,13 @@ const IntegrationProvider = ({ children }) => {
     }
     for (const [uri, [_, shape]] of changes.same)
       uris.get(uri).shape = shape
-    app.current.delete(Array.from(toDelete.values()))
+    if (toDelete.size) {
+      console.log(
+        `Cleaning up ${toDelete.size} unknown shapes`,
+        Array.from(toDelete.values()).map(id => app.current.getShape(id))
+      )
+      app.current.delete(Array.from(toDelete.values()))
+    }
   }
 
   const retreiveInstanceState = async () => {

@@ -39,6 +39,28 @@ inject('pod', async ({ app }) => {
     return appDefinitions
   }
 
+  app.get('/test1', inject.one('req.guard')(async (req, res) => {
+    res.send({
+      instances: [
+        {
+          instanceId: 'test1',
+          text: 'Test 1'
+        }
+      ]
+    })
+  }))
+
+  app.get('/test2', inject.one('req.guard')(async (req, res) => {
+    res.send({
+      instances: [
+        {
+          instanceId: 'test1',
+          text: 'Test 1'
+        }
+      ]
+    })
+  }))
+
   app.get('/caprover', inject.one('req.guard')(async (req, res) => {
     await assert_token()
     const app_definitions = await get_app_definitions()

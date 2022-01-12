@@ -176,9 +176,9 @@ export const Menu = React.memo(function Menu({ showSponsorLink, readOnly }: Menu
             </DMSubMenu>
           </>
         )}
-        <a href="https://tldraw.com/r">
+        {/* <a href="https://tldraw.com/r">
           <DMItem>Create a Multiplayer Room</DMItem>
-        </a>
+        </a> */}
         <DMDivider dir="ltr" />
         <PreferencesMenu />
         <DMDivider dir="ltr" />

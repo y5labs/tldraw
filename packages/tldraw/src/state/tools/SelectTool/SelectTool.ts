@@ -15,6 +15,9 @@ import Vec from '@tldraw/vec'
 import { TLDR } from '~state/TLDR'
 import { CLONING_DISTANCE, DEAD_ZONE } from '~constants'
 
+const uri_regex = new RegExp(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig)
+const parse_uris = (text: string): string[] => text.match(uri_regex).filter(m => m)
+
 enum Status {
   Idle = 'idle',
   Creating = 'creating',
@@ -215,7 +218,13 @@ export class SelectTool extends BaseTool<Status> {
       case 'Enter': {
         const { pageState } = this.app
         if (pageState.selectedIds.length === 1 && !pageState.editingId) {
-          this.app.setEditingId(pageState.selectedIds[0])
+          const shape = this.app.getShape(pageState.selectedIds[0])
+          const text = shape.uri || shape.label || shape.text
+          const uris = text ? parse_uris(text) : []
+          if (uris.length > 0)
+            window.open(uris[0], '_blank')
+          else
+            this.app.setEditingId(pageState.selectedIds[0])
           e.preventDefault()
         }
       }
